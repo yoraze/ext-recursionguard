@@ -30,18 +30,21 @@
 ZEND_DECLARE_MODULE_GLOBALS(recursionguard)
 
 #define INI_ENABLED_ENTRY "recursionguard.enabled"
+#define INI_MAX_CALL_DEPTH_ENTRY "recursionguard.max_call_depth"
 
 PHP_INI_BEGIN()
 PHP_INI_ENTRY(INI_ENABLED_ENTRY, "1", PHP_INI_SYSTEM, NULL)
+PHP_INI_ENTRY(INI_MAX_CALL_DEPTH_ENTRY, "256", PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 
 typedef void(*zend_execute_ex_function)(zend_execute_data *);
 
 static zend_execute_ex_function zend_execute_ex_hook = NULL;
+static zend_ulong maxCallDepth;
 
 static void guard_execute_ex(zend_execute_data *execute_data) {
-	if (RECURSIONGUARD_G(call_depth) > 256) {
-		zend_throw_error(NULL, "Reached maximum call depth of 256, aborting!");
+	if (RECURSIONGUARD_G(call_depth) > maxCallDepth) {
+		zend_throw_error_ex(NULL, 0, "Reached maximum call depth of %zu, aborting!", maxCallDepth);
 		return;
 	}
 	RECURSIONGUARD_G(call_depth)++;
@@ -56,6 +59,8 @@ PHP_MINIT_FUNCTION(recursionguard)
 	if (INI_BOOL(INI_ENABLED_ENTRY)) {
 		zend_execute_ex_hook = zend_execute_ex;
 		zend_execute_ex = guard_execute_ex;
+
+		maxCallDepth = INI_LONG(INI_MAX_CALL_DEPTH_ENTRY);
 	}
 
 	return SUCCESS;
