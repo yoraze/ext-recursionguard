@@ -60,7 +60,7 @@ PHP_MINIT_FUNCTION(recursionguard)
 		zend_execute_ex_hook = zend_execute_ex;
 		zend_execute_ex = guard_execute_ex;
 
-		maxCallDepth = INI_LONG(INI_MAX_CALL_DEPTH_ENTRY);
+		maxCallDepth = zend_ini_long((char *) INI_MAX_CALL_DEPTH_ENTRY, strlen(INI_MAX_CALL_DEPTH_ENTRY), 0);
 	}
 
 	return SUCCESS;
